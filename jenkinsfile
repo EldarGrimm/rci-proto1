@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/YOUR_USER/YOUR_STREAMLIT_REPO.git', branch: 'main'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'pytest'
+            }
+        }
+
+        stage('Build Artifact') {
+            steps {
+                sh 'zip -r streamlit_app.zip .'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'streamlit_app.zip', fingerprint: true
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                sh './deploy_staging.sh'
+            }
+        }
+
+        stage('Approval') {
+            steps {
+                input message: "Deploy to production?"
+            }
+        }
+
+        stage('Deploy to Production') {
+            steps {
+                sh './deploy_production.sh'
+            }
+        }
+    }
+}
