@@ -11,7 +11,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git', branch: 'main'
+                git url: 'https://github.com/EldarGrimm/rci-proto1.git', branch: 'main'
             }
         }
 
