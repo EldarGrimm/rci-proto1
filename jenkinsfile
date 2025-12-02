@@ -1,10 +1,17 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = "rci-streamlit"
+        STAGING_PORT = "8501"
+        PROD_PORT = "9001"
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/YOUR_USER/YOUR_STREAMLIT_REPO.git', branch: 'main'
+                git url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git', branch: 'main'
             }
         }
 
@@ -16,17 +23,14 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'pytest'
+                sh 'pytest --maxfail=1 --disable-warnings -q'
             }
         }
 
-        stage('Build Artifact') {
+        stage('Build Docker Image') {
             steps {
-                sh 'zip -r streamlit_app.zip .'
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'streamlit_app.zip', fingerprint: true
+                script {
+                    dockerImage = docker.build("${APP_NAME}:${BUILD_NUMBER}")
                 }
             }
         }
@@ -39,7 +43,7 @@ pipeline {
 
         stage('Approval') {
             steps {
-                input message: "Deploy to production?"
+                input message: "Deploy to PRODUCTION environment?"
             }
         }
 
@@ -47,6 +51,12 @@ pipeline {
             steps {
                 sh './deploy_production.sh'
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline complete for build #${BUILD_NUMBER}"
         }
     }
 }
